@@ -113,7 +113,7 @@ export function handleDeposit(ev: DepositEvent): void
 
   deposit.caller = caller.id;
   deposit.owner = owner.id;
-  deposit.shareAmount = ev.params.assets;
+  deposit.assetAmount = ev.params.assets;
   deposit.shareAmount = ev.params.shares;
   deposit.transaction = ev.transaction.hash;
   deposit.timestamp = ev.block.timestamp;
