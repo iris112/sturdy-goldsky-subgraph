@@ -31,14 +31,14 @@ export function handleAddCollateral(ev: AddCollateralEvent): void
   if (sender == null) {
     sender = new User(ev.params.sender.toHex());
     sender.collateralAmount = BigInt.fromI32(0);
-    sender.assetAmount = BigInt.fromI32(0);
+    sender.shareAmount = BigInt.fromI32(0);
     sender.save();
   }
 
   if (borrower == null) {
     borrower = new User(ev.params.borrower.toHex());
     borrower.collateralAmount = BigInt.fromI32(0);
-    borrower.assetAmount = BigInt.fromI32(0);
+    borrower.shareAmount = BigInt.fromI32(0);
   }
   borrower.collateralAmount = borrower.collateralAmount.plus(ev.params.collateralAmount);
   borrower.save();
@@ -61,21 +61,21 @@ export function handleRemoveCollateral(ev: RemoveCollateralEvent): void
   if (sender == null) {
     sender = new User(ev.params._sender.toHex());
     sender.collateralAmount = BigInt.fromI32(0);
-    sender.assetAmount = BigInt.fromI32(0);
+    sender.shareAmount = BigInt.fromI32(0);
     sender.save();
   }
 
   if (receiver == null) {
     receiver = new User(ev.params._receiver.toHex());
     receiver.collateralAmount = BigInt.fromI32(0);
-    receiver.assetAmount = BigInt.fromI32(0);
+    receiver.shareAmount = BigInt.fromI32(0);
     receiver.save();
   }
 
   if (borrower == null) {
     borrower = new User(ev.params._borrower.toHex());
     borrower.collateralAmount = BigInt.fromI32(0);
-    borrower.assetAmount = BigInt.fromI32(0);
+    borrower.shareAmount = BigInt.fromI32(0);
   }
   borrower.collateralAmount = borrower.collateralAmount.minus(ev.params._collateralAmount);
   borrower.save();
@@ -98,22 +98,22 @@ export function handleDeposit(ev: DepositEvent): void
   if (caller == null) {
     caller = new User(ev.params.caller.toHex());
     caller.collateralAmount = BigInt.fromI32(0);
-    caller.assetAmount = BigInt.fromI32(0);
+    caller.shareAmount = BigInt.fromI32(0);
     caller.save();
   }
 
   if (owner == null) {
     owner = new User(ev.params.owner.toHex());
     owner.collateralAmount = BigInt.fromI32(0);
-    owner.assetAmount = BigInt.fromI32(0);
+    owner.shareAmount = BigInt.fromI32(0);
     owner.save();
   }
-  owner.assetAmount = owner.assetAmount.plus(ev.params.assets);
+  owner.shareAmount = owner.shareAmount.plus(ev.params.shares);
   owner.save();
 
   deposit.caller = caller.id;
   deposit.owner = owner.id;
-  deposit.assetAmount = ev.params.assets;
+  deposit.shareAmount = ev.params.assets;
   deposit.shareAmount = ev.params.shares;
   deposit.transaction = ev.transaction.hash;
   deposit.timestamp = ev.block.timestamp;
@@ -130,24 +130,24 @@ export function handleWithdraw(ev: WithdrawEvent): void
   if (caller == null) {
     caller = new User(ev.params.caller.toHex());
     caller.collateralAmount = BigInt.fromI32(0);
-    caller.assetAmount = BigInt.fromI32(0);
+    caller.shareAmount = BigInt.fromI32(0);
     caller.save();
   }
 
   if (receiver == null) {
     receiver = new User(ev.params.receiver.toHex());
     receiver.collateralAmount = BigInt.fromI32(0);
-    receiver.assetAmount = BigInt.fromI32(0);
+    receiver.shareAmount = BigInt.fromI32(0);
     receiver.save();
   }
 
   if (owner == null) {
     owner = new User(ev.params.owner.toHex());
     owner.collateralAmount = BigInt.fromI32(0);
-    owner.assetAmount = BigInt.fromI32(0);
+    owner.shareAmount = BigInt.fromI32(0);
     owner.save();
   }
-  owner.assetAmount = owner.assetAmount.minus(ev.params.assets);
+  owner.shareAmount = owner.shareAmount.minus(ev.params.shares);
   owner.save();
 
   withdraw.caller = caller.id;

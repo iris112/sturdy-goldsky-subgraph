@@ -5,7 +5,7 @@ type User @entity
   removeCollaterals:            [RemoveCollateral!]! @derivedFrom(field: "borrower")
   deposits:                     [Deposit!]! @derivedFrom(field: "owner")
   withdraws:                    [Withdraw!]! @derivedFrom(field: "owner")
-  assetAmount:                  BigInt!
+  shareAmount:                  BigInt!
   collateralAmount:             BigInt!
 }
 
