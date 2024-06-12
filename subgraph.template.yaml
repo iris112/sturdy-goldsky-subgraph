@@ -1,29 +1,35 @@
 specVersion: 0.0.2
-description: POAP
-repository: https://github.com/poap-xyz/poap-mainnet-subgraph
+description: Sturdy
+repository: https://github.com/sturdyfi/v2-aggregator
 schema:
   file: ./schema.graphql
 dataSources:
   - kind: ethereum/contract
-    name: Poap
+    name: SturdyPair
     network: {{ network }}
     source:
       address: "{{ address }}"
-      abi: Poap
+      abi: Pair
       startBlock: {{ startBlock }}
     mapping:
       kind: ethereum/events
       apiVersion: 0.0.5
       language: wasm/assemblyscript
       entities:
-        - EventToken
-        - Transfer
+        - AddCollateral
+        - RemoveCollateral
+        - Deposit
+        - Withdraw
       abis:
-        - name: Poap
+        - name: Pair
           file: ./abis/{{ file }}.json
       eventHandlers:
-        - event: {{ tokenEvent }}
-          handler: handleEventToken
-        - event: Transfer(indexed address,indexed address,indexed uint256)
-          handler: handleTransfer
+        - event: AddCollateral(indexed address,indexed address,uint256)
+          handler: handleAddCollateral
+        - event: RemoveCollateral(indexed address,uint256,indexed address,indexed address)
+          handler: handleRemoveCollateral
+        - event: Deposit(indexed address,indexed address,uint256,uint256)
+          handler: handleDeposit
+        - event: Withdraw(indexed address,indexed address,indexed address,uint256,uint256)
+          handler: handleWithdraw
       file: ./src/mapping.ts

@@ -1,37 +1,54 @@
-type Token @entity
+type User @entity
 {
   id:                           ID!
-  owner:                        Account!
-  event:                        Event
-  transfers:                    [Transfer!]! @derivedFrom(field: "token")
-  transferCount:                BigInt!
-  created:                      BigInt!
-  mintOrder:                    BigInt
+  addCollaterals:               [AddCollateral!]! @derivedFrom(field: "borrower")
+  removeCollaterals:            [RemoveCollateral!]! @derivedFrom(field: "borrower")
+  deposits:                     [Deposit!]! @derivedFrom(field: "owner")
+  withdraws:                    [Withdraw!]! @derivedFrom(field: "owner")
+  assetAmount:                  BigInt!
+  collateralAmount:             BigInt!
 }
 
-type Account @entity
+type AddCollateral @entity
 {
   id:                           ID!
-  tokens:                       [Token!]! @derivedFrom(field: "owner")
-  tokensOwned:                  BigInt!
+  sender:                       User!
+  borrower:                     User!
+  collateralAmount:             BigInt!
+  transaction:                  Bytes!
+  timestamp:                    BigInt!
 }
 
-type Event @entity
+type RemoveCollateral @entity
 {
   id:                           ID!
-  tokens:                       [Token!]! @derivedFrom(field: "event")
-  tokenCount:              	    BigInt!
-  created:                      BigInt!
-  transferCount:                BigInt!
-  tokenMints:                   BigInt!
+  sender:                       User!
+  receiver:                     User!
+  borrower:                     User!
+  collateralAmount:             BigInt!
+  transaction:                  Bytes!
+  timestamp:                    BigInt!
 }
 
-type Transfer @entity
+type Deposit @entity
 {
   id:                           ID!
-  token:                        Token!
-  from:                         Account!
-  to:                           Account!
+  caller:                       User!
+  owner:                        User!
+  assetAmount:                  BigInt!
+  shareAmount:                  BigInt!
+  transaction:                  Bytes!
+  timestamp:                    BigInt!
+}
+
+type Withdraw @entity
+{
+  id:                           ID!
+  caller:                       User!
+  receiver:                     User!
+  owner:                        User!
+  assetAmount:                  BigInt!
+  shareAmount:                  BigInt!
   transaction:                  Bytes!
   timestamp:                    BigInt!
 }

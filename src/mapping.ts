@@ -3,105 +3,159 @@ import {
 } from '@graphprotocol/graph-ts'
 
 import {
-  EventToken as EventTokenEvent,
-  Transfer   as TransferEvent,
-} from '../generated/Poap/Poap'
+  AddCollateral as AddCollateralEvent,
+  RemoveCollateral as RemoveCollateralEvent,
+  Deposit as DepositEvent,
+  Withdraw as WithdrawEvent,
+} from '../generated/SturdyPair/Pair'
 
 import {
-  Token,
-  Account,
-  Event,
-  Transfer,
+  User,
+  AddCollateral,
+  RemoveCollateral,
+  Deposit,
+  Withdraw
 } from '../generated/schema'
 
-const ZERO_ADDRESS = '0x0000000000000000000000000000000000000000'
-
-
-function createEventID(event: ethereum.Event): string
+function createID(event: ethereum.Event): string
 {
   return event.block.number.toString().concat('-').concat(event.logIndex.toString());
 }
 
-export function handleEventToken(ev: EventTokenEvent): void
+export function handleAddCollateral(ev: AddCollateralEvent): void
 {
-  let event = Event.load(ev.params.eventId.toString());
-  // This handler always run after the transfer handler
-  let token = Token.load(ev.params.tokenId.toString())!;
-  if (event == null) {
-    event               = new Event(ev.params.eventId.toString());
-    event.tokenCount    = BigInt.fromI32(0);
-    event.tokenMints    = BigInt.fromI32(0);
-    event.transferCount = BigInt.fromI32(0);
-    event.created       = ev.block.timestamp
+  let addCollateral = new AddCollateral(createID(ev));
+  let sender = User.load(ev.params.sender.toHex());
+  let borrower = User.load(ev.params.borrower.toHex());
+  
+  if (sender == null) {
+    sender = new User(ev.params.sender.toHex());
+    sender.collateralAmount = BigInt.fromI32(0);
+    sender.assetAmount = BigInt.fromI32(0);
+    sender.save();
   }
 
-  event.tokenCount    += BigInt.fromI32(1);
-  event.tokenMints    += BigInt.fromI32(1);
-  event.transferCount += BigInt.fromI32(1);
-  token.event         = event.id;
-  token.mintOrder     = event.tokenMints;
-  event.save();
-  token.save();
+  if (borrower == null) {
+    borrower = new User(ev.params.borrower.toHex());
+    borrower.collateralAmount = BigInt.fromI32(0);
+    borrower.assetAmount = BigInt.fromI32(0);
+  }
+  borrower.collateralAmount = borrower.collateralAmount.plus(ev.params.collateralAmount);
+  borrower.save();
+
+  addCollateral.sender = sender.id;
+  addCollateral.borrower = borrower.id;
+  addCollateral.collateralAmount = ev.params.collateralAmount;
+  addCollateral.transaction = ev.transaction.hash;
+  addCollateral.timestamp = ev.block.timestamp;
+  addCollateral.save();
 }
 
-export function handleTransfer(ev: TransferEvent): void {
-  let token    = Token.load(ev.params.tokenId.toString());
-  let from     = Account.load(ev.params.from.toHex());
-  let to       = Account.load(ev.params.to.toHex());
-  let transfer = new Transfer(createEventID(ev));
-
-  if (from == null) {
-    from              = new Account(ev.params.from.toHex());
-    // The from account at least has to own one token
-    from.tokensOwned  = BigInt.fromI32(1);
-  }
-  // Don't subtracts from the ZERO_ADDRESS (it's the one that mint the token)
-  // Avoid negative values
-  if(from.id != ZERO_ADDRESS) {
-    from.tokensOwned -= BigInt.fromI32(1);
-  }
-  from.save();
-
-  if (to == null) {
-    to              = new Account(ev.params.to.toHex());
-    to.tokensOwned  = BigInt.fromI32(0);
-  }
-  to.tokensOwned += BigInt.fromI32(1);
-  to.save();
-
-  if (token == null) {
-    token               = new Token(ev.params.tokenId.toString());
-    token.transferCount = BigInt.fromI32(0);
-    token.created       = ev.block.timestamp
-  }
-  token.owner = to.id;
-  token.transferCount += BigInt.fromI32(1);
-  token.save();
-
-
-  if (token.event != null) {
-    let event = Event.load(token.event as string);
-
-    if(event != null) {
-      // Add one transfer
-      event.transferCount += BigInt.fromI32(1);
+export function handleRemoveCollateral(ev: RemoveCollateralEvent): void
+{
+  let removeCollateral = new RemoveCollateral(createID(ev));
+  let sender = User.load(ev.params._sender.toHex());
+  let receiver = User.load(ev.params._receiver.toHex());
+  let borrower = User.load(ev.params._borrower.toHex());
   
-      // Burning the token
-      if(to.id == ZERO_ADDRESS) {
-        event.tokenCount    -= BigInt.fromI32(1);
-        // Subtract all the transfers from the burned token
-        event.transferCount -= token.transferCount;
-      }
-      event.save();
-    }
+  if (sender == null) {
+    sender = new User(ev.params._sender.toHex());
+    sender.collateralAmount = BigInt.fromI32(0);
+    sender.assetAmount = BigInt.fromI32(0);
+    sender.save();
   }
 
-  
+  if (receiver == null) {
+    receiver = new User(ev.params._receiver.toHex());
+    receiver.collateralAmount = BigInt.fromI32(0);
+    receiver.assetAmount = BigInt.fromI32(0);
+    receiver.save();
+  }
 
-  transfer.token       = token.id;
-  transfer.from        = from.id;
-  transfer.to          = to.id;
-  transfer.transaction = ev.transaction.hash;
-  transfer.timestamp   = ev.block.timestamp;
-  transfer.save();
+  if (borrower == null) {
+    borrower = new User(ev.params._borrower.toHex());
+    borrower.collateralAmount = BigInt.fromI32(0);
+    borrower.assetAmount = BigInt.fromI32(0);
+  }
+  borrower.collateralAmount = borrower.collateralAmount.minus(ev.params._collateralAmount);
+  borrower.save();
+
+  removeCollateral.sender = sender.id;
+  removeCollateral.receiver = receiver.id;
+  removeCollateral.borrower = borrower.id;
+  removeCollateral.collateralAmount = ev.params._collateralAmount;
+  removeCollateral.transaction = ev.transaction.hash;
+  removeCollateral.timestamp = ev.block.timestamp;
+  removeCollateral.save();
+}
+
+export function handleDeposit(ev: DepositEvent): void
+{
+  let deposit = new Deposit(createID(ev));
+  let caller = User.load(ev.params.caller.toHex());
+  let owner = User.load(ev.params.owner.toHex());
+  
+  if (caller == null) {
+    caller = new User(ev.params.caller.toHex());
+    caller.collateralAmount = BigInt.fromI32(0);
+    caller.assetAmount = BigInt.fromI32(0);
+    caller.save();
+  }
+
+  if (owner == null) {
+    owner = new User(ev.params.owner.toHex());
+    owner.collateralAmount = BigInt.fromI32(0);
+    owner.assetAmount = BigInt.fromI32(0);
+    owner.save();
+  }
+  owner.assetAmount = owner.assetAmount.plus(ev.params.assets);
+  owner.save();
+
+  deposit.caller = caller.id;
+  deposit.owner = owner.id;
+  deposit.assetAmount = ev.params.assets;
+  deposit.shareAmount = ev.params.shares;
+  deposit.transaction = ev.transaction.hash;
+  deposit.timestamp = ev.block.timestamp;
+  deposit.save();
+}
+
+export function handleWithdraw(ev: WithdrawEvent): void
+{
+  let withdraw = new Withdraw(createID(ev));
+  let caller = User.load(ev.params.caller.toHex());
+  let receiver = User.load(ev.params.receiver.toHex());
+  let owner = User.load(ev.params.owner.toHex());
+  
+  if (caller == null) {
+    caller = new User(ev.params.caller.toHex());
+    caller.collateralAmount = BigInt.fromI32(0);
+    caller.assetAmount = BigInt.fromI32(0);
+    caller.save();
+  }
+
+  if (receiver == null) {
+    receiver = new User(ev.params.receiver.toHex());
+    receiver.collateralAmount = BigInt.fromI32(0);
+    receiver.assetAmount = BigInt.fromI32(0);
+    receiver.save();
+  }
+
+  if (owner == null) {
+    owner = new User(ev.params.owner.toHex());
+    owner.collateralAmount = BigInt.fromI32(0);
+    owner.assetAmount = BigInt.fromI32(0);
+    owner.save();
+  }
+  owner.assetAmount = owner.assetAmount.minus(ev.params.assets);
+  owner.save();
+
+  withdraw.caller = caller.id;
+  withdraw.receiver = receiver.id;
+  withdraw.owner = owner.id;
+  withdraw.assetAmount = ev.params.assets;
+  withdraw.shareAmount = ev.params.shares;
+  withdraw.transaction = ev.transaction.hash;
+  withdraw.timestamp = ev.block.timestamp;
+  withdraw.save();
 }
