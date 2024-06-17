@@ -80,6 +80,7 @@ export function handleAddCollateral(ev: AddCollateralEvent): void
   borrowerPair.collateralAmount = borrowerPair.collateralAmount.plus(ev.params.collateralAmount);
   borrowerPair.save();
 
+  addCollateral.pair = pair.id;
   addCollateral.sender = sender.id;
   addCollateral.borrower = borrower.id;
   addCollateral.collateralAmount = ev.params.collateralAmount;
@@ -148,6 +149,7 @@ export function handleRemoveCollateral(ev: RemoveCollateralEvent): void
   borrowerPair.collateralAmount = borrowerPair.collateralAmount.minus(ev.params._collateralAmount);
   borrowerPair.save();
 
+  removeCollateral.pair = pair.id;
   removeCollateral.sender = sender.id;
   removeCollateral.receiver = receiver.id;
   removeCollateral.borrower = borrower.id;
@@ -200,6 +202,7 @@ export function handleDeposit(ev: DepositEvent): void
   ownerPair.assetAmount = getSturdyPairContract(ev.address).try_convertToAssets(ownerPair.shareAmount).value;
   ownerPair.save();
 
+  deposit.pair = pair.id;
   deposit.caller = caller.id;
   deposit.owner = owner.id;
   deposit.assetAmount = ev.params.assets;
@@ -270,6 +273,7 @@ export function handleWithdraw(ev: WithdrawEvent): void
   ownerPair.assetAmount = getSturdyPairContract(ev.address).try_convertToAssets(ownerPair.shareAmount).value;
   ownerPair.save();
 
+  withdraw.pair = pair.id;
   withdraw.caller = caller.id;
   withdraw.receiver = receiver.id;
   withdraw.owner = owner.id;
