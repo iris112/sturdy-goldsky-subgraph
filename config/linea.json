@@ -1,6 +1,5 @@
 {
   "network": "linea",
-  "address": "0x6EeFDBAd45AA2a688bbD5b7c098c323f05Df2223",
-  "startBlock": 4811764,
-  "file": "Pair"
+  "SturdyPairDeployerAddress": "0x298D679cb18deCE7271f56589859BC4dA6C91f87",
+  "SturdyPairDeployerStartBlock": 4811757
 }

@@ -1,19 +1,45 @@
 type User @entity
 {
   id:                           ID!
+  address:                      Bytes!
+  pairs:                        [UserPair!]! @derivedFrom(field: "user")
   addCollaterals:               [AddCollateral!]! @derivedFrom(field: "borrower")
   removeCollaterals:            [RemoveCollateral!]! @derivedFrom(field: "borrower")
   deposits:                     [Deposit!]! @derivedFrom(field: "owner")
   withdraws:                    [Withdraw!]! @derivedFrom(field: "owner")
+}
+
+type SturdyPair @entity 
+{
+  id:                           ID!
+  address:                      Bytes!
+  asset:                        Token!
+}
+
+type UserPair @entity 
+{
+  id:                           ID!
+  user:                         User!
+  pair:                         SturdyPair!
   shareAmount:                  BigInt!
+  assetAmount:                  BigInt!
   collateralAmount:             BigInt!
+}
+
+type Token @entity 
+{
+  id:                           ID!
+  decimals:                     Int!
+  name:                         String!
+  symbol:                       String!
 }
 
 type AddCollateral @entity
 {
   id:                           ID!
+  pair:                         SturdyPair!
   sender:                       User!
-  borrower:                     User!
+  borrower:                     User! @relation(name: "UserPairs")
   collateralAmount:             BigInt!
   transaction:                  Bytes!
   timestamp:                    BigInt!
@@ -22,9 +48,10 @@ type AddCollateral @entity
 type RemoveCollateral @entity
 {
   id:                           ID!
+  pair:                         SturdyPair!
   sender:                       User!
   receiver:                     User!
-  borrower:                     User!
+  borrower:                     User! @relation(name: "UserPairs")
   collateralAmount:             BigInt!
   transaction:                  Bytes!
   timestamp:                    BigInt!
@@ -33,8 +60,9 @@ type RemoveCollateral @entity
 type Deposit @entity
 {
   id:                           ID!
+  pair:                         SturdyPair!
   caller:                       User!
-  owner:                        User!
+  owner:                        User! @relation(name: "UserPairs")
   assetAmount:                  BigInt!
   shareAmount:                  BigInt!
   transaction:                  Bytes!
@@ -44,9 +72,10 @@ type Deposit @entity
 type Withdraw @entity
 {
   id:                           ID!
+  pair:                         SturdyPair!
   caller:                       User!
   receiver:                     User!
-  owner:                        User!
+  owner:                        User! @relation(name: "UserPairs")
   assetAmount:                  BigInt!
   shareAmount:                  BigInt!
   transaction:                  Bytes!

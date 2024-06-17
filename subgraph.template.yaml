@@ -5,24 +5,43 @@ schema:
   file: ./schema.graphql
 dataSources:
   - kind: ethereum/contract
-    name: SturdyPair
-    network: {{ network }}
+    name: SturdyPairDeployer
+    network: {{network}}
     source:
-      address: "{{ address }}"
-      abi: Pair
-      startBlock: {{ startBlock }}
+      address: '{{SturdyPairDeployerAddress}}'
+      startBlock: {{SturdyPairDeployerStartBlock}}
+      abi: SturdyPairDeployer
     mapping:
       kind: ethereum/events
-      apiVersion: 0.0.5
+      apiVersion: 0.0.6
       language: wasm/assemblyscript
       entities:
-        - AddCollateral
-        - RemoveCollateral
-        - Deposit
-        - Withdraw
+        - SturdyPair
       abis:
-        - name: Pair
-          file: ./abis/{{ file }}.json
+        - name: SturdyPairDeployer
+          file: ./abis/SturdyPairDeployer.json
+      eventHandlers:
+        - event: LogDeploy(indexed address,indexed address,indexed address,string,bytes,bytes,bytes)
+          handler: handleSturdyPairDeployed
+      file: ./src/mapping.ts
+templates:
+  - kind: ethereum/contract
+    name: SturdyPair
+    network: {{network}}
+    source:
+      abi: SturdyPairContract
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.6
+      language: wasm/assemblyscript
+      entities:
+        - SturdyPair
+        - Token
+      abis:
+        - name: SturdyPairContract
+          file: ./abis/SturdyPair.json
+        - name: ERC20
+          file: ./abis/ERC20.json
       eventHandlers:
         - event: AddCollateral(indexed address,indexed address,uint256)
           handler: handleAddCollateral
