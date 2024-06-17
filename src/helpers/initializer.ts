@@ -47,7 +47,7 @@ export function getOrInitSturdyPair(address: Address): SturdyPair {
 
     pair.address = address;
     pair.asset = assetToken.id;
-    pair.collateralAsset = collateralAssetToken.id;
+    pair.collateralAsset = (collateralAssetAddress.value || Address.zero()).toHexString();
 
     pair.save();
   }
