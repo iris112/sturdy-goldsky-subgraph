@@ -14,6 +14,7 @@ type SturdyPair @entity
   id:                           ID!
   address:                      Bytes!
   asset:                        Token!
+  collateralAsset:              Token!
 }
 
 type UserPair @entity 

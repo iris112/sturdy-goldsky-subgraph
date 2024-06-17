@@ -41,10 +41,13 @@ export function getOrInitSturdyPair(address: Address): SturdyPair {
     let pairContract = getSturdyPairContract(address);
 
     let assetAddress = pairContract.try_asset();
+    let collateralAssetAddress = pairContract.try_collateralContract();
     let assetToken = getOrInitToken(assetAddress.value || Address.zero());
+    let collateralAssetToken = getOrInitToken(collateralAssetAddress.value || Address.zero());
 
     pair.address = address;
     pair.asset = assetToken.id;
+    pair.collateralAsset collateralAssetToken.id;
 
     pair.save();
   }
