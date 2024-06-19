@@ -7,6 +7,8 @@ type User @entity
   removeCollaterals:            [RemoveCollateral!]! @derivedFrom(field: "borrower")
   deposits:                     [Deposit!]! @derivedFrom(field: "owner")
   withdraws:                    [Withdraw!]! @derivedFrom(field: "owner")
+  borrows:                      [Borrow!]! @derivedFrom(field: "borrower")
+  repays:                       [Repay!]! @derivedFrom(field: "borrower")
 }
 
 type SturdyPair @entity 
@@ -24,6 +26,8 @@ type UserPair @entity
   pair:                         SturdyPair!
   shareAmount:                  BigInt!
   assetAmount:                  BigInt!
+  debtShareAmount:              BigInt!
+  debtAssetAmount:              BigInt!
   collateralAmount:             BigInt!
 }
 
@@ -77,6 +81,30 @@ type Withdraw @entity
   caller:                       User!
   receiver:                     User!
   owner:                        User! @relation(name: "UserPairs")
+  assetAmount:                  BigInt!
+  shareAmount:                  BigInt!
+  transaction:                  Bytes!
+  timestamp:                    BigInt!
+}
+
+type Borrow @entity
+{
+  id:                           ID!
+  pair:                         SturdyPair!
+  borrower:                     User! @relation(name: "UserPairs")
+  receiver:                     User!
+  borrowAmount:                 BigInt!
+  shareAmount:                  BigInt!
+  transaction:                  Bytes!
+  timestamp:                    BigInt!
+}
+
+type Repay @entity
+{
+  id:                           ID!
+  pair:                         SturdyPair!
+  payer:                        User!
+  borrower:                     User! @relation(name: "UserPairs")
   assetAmount:                  BigInt!
   shareAmount:                  BigInt!
   transaction:                  Bytes!

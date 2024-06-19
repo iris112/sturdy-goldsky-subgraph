@@ -7,6 +7,8 @@ import {
   RemoveCollateral as RemoveCollateralEvent,
   Deposit as DepositEvent,
   Withdraw as WithdrawEvent,
+  BorrowAsset as BorrowEvent,
+  RepayAsset as RepayEvent
 } from '../generated/templates/SturdyPair/SturdyPairContract'
 
 import { LogDeploy as LogDeployEvent} from '../generated/SturdyPairDeployer/SturdyPairDeployer';
@@ -19,7 +21,9 @@ import {
   RemoveCollateral,
   Deposit,
   Withdraw,
-  UserPair
+  UserPair,
+  Borrow,
+  Repay
 } from '../generated/schema'
 import { getOrInitSturdyPair } from './helpers/initializer';
 import { getSturdyPairContract } from './helpers/contracts';
@@ -60,6 +64,8 @@ export function handleAddCollateral(ev: AddCollateralEvent): void
     senderPair.collateralAmount = BigInt.fromI32(0);
     senderPair.assetAmount = BigInt.fromI32(0);
     senderPair.shareAmount = BigInt.fromI32(0);
+    senderPair.debtAssetAmount = BigInt.fromI32(0);
+    senderPair.debtShareAmount = BigInt.fromI32(0);
     senderPair.save();
   }
 
@@ -76,6 +82,8 @@ export function handleAddCollateral(ev: AddCollateralEvent): void
     borrowerPair.collateralAmount = BigInt.fromI32(0);
     borrowerPair.assetAmount = BigInt.fromI32(0);
     borrowerPair.shareAmount = BigInt.fromI32(0);
+    borrowerPair.debtAssetAmount = BigInt.fromI32(0);
+    borrowerPair.debtShareAmount = BigInt.fromI32(0);
   }
   borrowerPair.collateralAmount = borrowerPair.collateralAmount.plus(ev.params.collateralAmount);
   borrowerPair.save();
@@ -113,6 +121,8 @@ export function handleRemoveCollateral(ev: RemoveCollateralEvent): void
     senderPair.collateralAmount = BigInt.fromI32(0);
     senderPair.assetAmount = BigInt.fromI32(0);
     senderPair.shareAmount = BigInt.fromI32(0);
+    senderPair.debtAssetAmount = BigInt.fromI32(0);
+    senderPair.debtShareAmount = BigInt.fromI32(0);
     senderPair.save();
   }
 
@@ -129,6 +139,8 @@ export function handleRemoveCollateral(ev: RemoveCollateralEvent): void
     receiverPair.collateralAmount = BigInt.fromI32(0);
     receiverPair.assetAmount = BigInt.fromI32(0);
     receiverPair.shareAmount = BigInt.fromI32(0);
+    receiverPair.debtAssetAmount = BigInt.fromI32(0);
+    receiverPair.debtShareAmount = BigInt.fromI32(0);
     receiverPair.save();
   }
 
@@ -145,6 +157,8 @@ export function handleRemoveCollateral(ev: RemoveCollateralEvent): void
     borrowerPair.collateralAmount = BigInt.fromI32(0);
     borrowerPair.assetAmount = BigInt.fromI32(0);
     borrowerPair.shareAmount = BigInt.fromI32(0);
+    borrowerPair.debtAssetAmount = BigInt.fromI32(0);
+    borrowerPair.debtShareAmount = BigInt.fromI32(0);
   }
   borrowerPair.collateralAmount = borrowerPair.collateralAmount.minus(ev.params._collateralAmount);
   borrowerPair.save();
@@ -181,6 +195,8 @@ export function handleDeposit(ev: DepositEvent): void
     callerPair.collateralAmount = BigInt.fromI32(0);
     callerPair.assetAmount = BigInt.fromI32(0);
     callerPair.shareAmount = BigInt.fromI32(0);
+    callerPair.debtAssetAmount = BigInt.fromI32(0);
+    callerPair.debtShareAmount = BigInt.fromI32(0);
     callerPair.save();
   }
 
@@ -197,6 +213,8 @@ export function handleDeposit(ev: DepositEvent): void
     ownerPair.collateralAmount = BigInt.fromI32(0);
     ownerPair.assetAmount = BigInt.fromI32(0);
     ownerPair.shareAmount = BigInt.fromI32(0);
+    ownerPair.debtAssetAmount = BigInt.fromI32(0);
+    ownerPair.debtShareAmount = BigInt.fromI32(0);
   }
   ownerPair.shareAmount = ownerPair.shareAmount.plus(ev.params.shares);
   ownerPair.assetAmount = getSturdyPairContract(ev.address).try_convertToAssets(ownerPair.shareAmount).value;
@@ -236,6 +254,8 @@ export function handleWithdraw(ev: WithdrawEvent): void
     callerPair.collateralAmount = BigInt.fromI32(0);
     callerPair.assetAmount = BigInt.fromI32(0);
     callerPair.shareAmount = BigInt.fromI32(0);
+    callerPair.debtAssetAmount = BigInt.fromI32(0);
+    callerPair.debtShareAmount = BigInt.fromI32(0);
     callerPair.save();
   }
 
@@ -252,6 +272,8 @@ export function handleWithdraw(ev: WithdrawEvent): void
     receiverPair.collateralAmount = BigInt.fromI32(0);
     receiverPair.assetAmount = BigInt.fromI32(0);
     receiverPair.shareAmount = BigInt.fromI32(0);
+    receiverPair.debtAssetAmount = BigInt.fromI32(0);
+    receiverPair.debtShareAmount = BigInt.fromI32(0);
     receiverPair.save();
   }
 
@@ -268,6 +290,8 @@ export function handleWithdraw(ev: WithdrawEvent): void
     ownerPair.collateralAmount = BigInt.fromI32(0);
     ownerPair.assetAmount = BigInt.fromI32(0);
     ownerPair.shareAmount = BigInt.fromI32(0);
+    ownerPair.debtAssetAmount = BigInt.fromI32(0);
+    ownerPair.debtShareAmount = BigInt.fromI32(0);
   }
   ownerPair.shareAmount = ownerPair.shareAmount.minus(ev.params.shares);
   ownerPair.assetAmount = getSturdyPairContract(ev.address).try_convertToAssets(ownerPair.shareAmount).value;
@@ -282,4 +306,118 @@ export function handleWithdraw(ev: WithdrawEvent): void
   withdraw.transaction = ev.transaction.hash;
   withdraw.timestamp = ev.block.timestamp;
   withdraw.save();
+}
+
+export function handleBorrow(ev: BorrowEvent): void
+{
+  let borrow = new Borrow(createID(ev));
+  let pair = getOrInitSturdyPair(ev.address)
+  let borrower = User.load(ev.params._borrower.toHex().toLowerCase());
+  let borrowerPair = UserPair.load(getUserPairID(ev.params._borrower.toHex(), ev.address.toHex()));
+  let receiver = User.load(ev.params._receiver.toHex().toLowerCase());
+  let receiverPair = UserPair.load(getUserPairID(ev.params._receiver.toHex(), ev.address.toHex()));
+  
+  if (receiver == null) {
+    receiver = new User(ev.params._receiver.toHex().toLowerCase());
+    receiver.address = ev.params._receiver;
+    receiver.save();
+  }
+
+  if (receiverPair == null) {
+    receiverPair = new UserPair(getUserPairID(ev.params._receiver.toHex(), ev.address.toHex()))
+    receiverPair.user = receiver.id;
+    receiverPair.pair = pair.id;
+    receiverPair.collateralAmount = BigInt.fromI32(0);
+    receiverPair.assetAmount = BigInt.fromI32(0);
+    receiverPair.shareAmount = BigInt.fromI32(0);
+    receiverPair.debtAssetAmount = BigInt.fromI32(0);
+    receiverPair.debtShareAmount = BigInt.fromI32(0);
+    receiverPair.save();
+  }
+
+  if (borrower == null) {
+    borrower = new User(ev.params._borrower.toHex().toLowerCase());
+    borrower.address = ev.params._borrower;
+    borrower.save();
+  }
+
+  if (borrowerPair == null) {
+    borrowerPair = new UserPair(getUserPairID(ev.params._borrower.toHex(), ev.address.toHex()))
+    borrowerPair.user = borrower.id;
+    borrowerPair.pair = pair.id;
+    borrowerPair.collateralAmount = BigInt.fromI32(0);
+    borrowerPair.assetAmount = BigInt.fromI32(0);
+    borrowerPair.shareAmount = BigInt.fromI32(0);
+    borrowerPair.debtAssetAmount = BigInt.fromI32(0);
+    borrowerPair.debtShareAmount = BigInt.fromI32(0);
+  }
+  borrowerPair.debtShareAmount = borrowerPair.debtShareAmount.plus(ev.params._sharesAdded);
+  borrowerPair.debtAssetAmount = getSturdyPairContract(ev.address).try_toBorrowAmount(borrowerPair.debtShareAmount, true, true).value;
+  borrowerPair.save();
+
+  borrow.pair = pair.id;
+  borrow.borrower = borrower.id;
+  borrow.receiver = receiver.id;
+  borrow.borrowAmount = ev.params._borrowAmount;
+  borrow.shareAmount = ev.params._sharesAdded;
+  borrow.transaction = ev.transaction.hash;
+  borrow.timestamp = ev.block.timestamp;
+  borrow.save();
+}
+
+export function handleRepay(ev: RepayEvent): void
+{
+  let repay = new Repay(createID(ev));
+  let pair = getOrInitSturdyPair(ev.address)
+  let borrower = User.load(ev.params.borrower.toHex().toLowerCase());
+  let borrowerPair = UserPair.load(getUserPairID(ev.params.borrower.toHex(), ev.address.toHex()));
+  let payer = User.load(ev.params.payer.toHex().toLowerCase());
+  let payerPair = UserPair.load(getUserPairID(ev.params.payer.toHex(), ev.address.toHex()));
+  
+  if (payer == null) {
+    payer = new User(ev.params.payer.toHex().toLowerCase());
+    payer.address = ev.params.payer;
+    payer.save();
+  }
+
+  if (payerPair == null) {
+    payerPair = new UserPair(getUserPairID(ev.params.payer.toHex(), ev.address.toHex()))
+    payerPair.user = payer.id;
+    payerPair.pair = pair.id;
+    payerPair.collateralAmount = BigInt.fromI32(0);
+    payerPair.assetAmount = BigInt.fromI32(0);
+    payerPair.shareAmount = BigInt.fromI32(0);
+    payerPair.debtAssetAmount = BigInt.fromI32(0);
+    payerPair.debtShareAmount = BigInt.fromI32(0);
+    payerPair.save();
+  }
+
+  if (borrower == null) {
+    borrower = new User(ev.params.borrower.toHex().toLowerCase());
+    borrower.address = ev.params.borrower;
+    borrower.save();
+  }
+
+  if (borrowerPair == null) {
+    borrowerPair = new UserPair(getUserPairID(ev.params.borrower.toHex(), ev.address.toHex()))
+    borrowerPair.user = borrower.id;
+    borrowerPair.pair = pair.id;
+    borrowerPair.collateralAmount = BigInt.fromI32(0);
+    borrowerPair.assetAmount = BigInt.fromI32(0);
+    borrowerPair.shareAmount = BigInt.fromI32(0);
+    borrowerPair.debtAssetAmount = BigInt.fromI32(0);
+    borrowerPair.debtShareAmount = BigInt.fromI32(0);
+  }
+  borrowerPair.debtShareAmount = borrowerPair.debtShareAmount.minus(ev.params.shares);
+  borrowerPair.debtAssetAmount = getSturdyPairContract(ev.address).try_toBorrowAmount(borrowerPair.debtShareAmount, true, true).value;
+  borrowerPair.save();
+
+  repay.pair = pair.id;
+  repay.borrower = borrower.id;
+  repay.payer = payer.id;
+  repay.assetAmount = ev.params.amountToRepay;
+  repay.shareAmount = ev.params.shares;
+  repay.transaction = ev.transaction.hash;
+  repay.timestamp = ev.block.timestamp;
+  repay.save();
 }

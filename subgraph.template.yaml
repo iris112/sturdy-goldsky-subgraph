@@ -51,4 +51,8 @@ templates:
           handler: handleDeposit
         - event: Withdraw(indexed address,indexed address,indexed address,uint256,uint256)
           handler: handleWithdraw
+        - event: BorrowAsset(indexed address,indexed address,uint256,uint256)
+          handler: handleBorrow
+        - event: RepayAsset(indexed address,indexed address,uint256,uint256)
+          handler: handleRepay
       file: ./src/mapping.ts
